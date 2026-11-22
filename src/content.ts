@@ -4,7 +4,7 @@ export const person = {
   role: "Software developer at Juspay",
   linkedin: "https://www.linkedin.com/in/prathameshsonawane03",
   phone: "+91 81779 42021",
-  email: "prathameshsonawane12345@gmail.com",
+  email: "prathams9603@gmail.com",
   github: "",
   resume: "", // e.g. "/resume.pdf" after dropping the file in public/
 };
