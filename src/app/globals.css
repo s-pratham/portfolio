@@ -1,0 +1,1293 @@
+/* The city is an architect's scale model under studio light: matte white clay
+   on a coloured ground that changes per chapter (Story.tsx tweens --ground).
+   Two lights only: warm amber windows, and cobalt for whatever is live. */
+:root {
+  --ground: #d9d4cb;
+  --ink: #171614;
+  --ink-2: #34312c;
+  --ink-3: #55514a;
+  --paper: #fbfaf7;
+  --clay-top: #f7f4ee;
+  --clay-left: #e4ded3;
+  --clay-right: #cbc3b5;
+  --edge: rgb(23 22 20 / 0.14);
+  --line: rgb(23 22 20 / 0.12);
+  --glow: #ffb347;
+  --signal: #2f45ff;
+  --signal-ink: #ffffff;
+
+  --font-serif: var(--font-display), "Times New Roman", serif;
+  --font-body: var(--font-sans), system-ui, sans-serif;
+  --font-code: var(--font-mono), ui-monospace, monospace;
+  --gutter: clamp(20px, 3.4vw, 56px);
+  --top-h: 64px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --sheet-shadow: 0 1px 0 rgb(255 255 255 / 0.6) inset, 0 30px 60px -24px rgb(40 32 20 / 0.35),
+    0 8px 20px -10px rgb(40 32 20 / 0.18);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--ground);
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+dl,
+dd,
+figure {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+}
+
+a:hover {
+  color: var(--signal);
+}
+
+:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 3px;
+}
+
+/* Header: no bar, just type on the model's air */
+
+.top {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 20;
+  height: var(--top-h);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding-inline: var(--gutter);
+  pointer-events: none;
+}
+
+.top > * {
+  position: relative;
+  pointer-events: auto;
+}
+
+/* Once the name has docked, a band of ground colour lets text slide under. */
+.top::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -36px;
+  background: linear-gradient(180deg, var(--ground) 55%, transparent);
+  opacity: var(--top-bg, 0);
+  pointer-events: none;
+}
+
+/* Hidden from first paint; the landing handover reveals them on scroll. */
+.top-name,
+.top nav a {
+  visibility: hidden;
+}
+
+.top-name {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.top nav {
+  display: flex;
+  gap: 22px;
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.top nav a {
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Story: one sticky stage, chapters scroll over it */
+
+.story {
+  position: relative;
+  background: var(--ground);
+}
+
+.stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  z-index: 0;
+  background: radial-gradient(120% 90% at 62% 40%, color-mix(in oklab, var(--ground) 70%, #fff) 0%, var(--ground) 55%,
+      color-mix(in oklab, var(--ground) 82%, #000) 100%);
+}
+
+.world {
+  visibility: hidden;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The air in front of the model: a soft scrim where the text sits, and paper
+   grain so the ground never reads as a flat fill. */
+.atmos,
+.scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Only behind the chapter text column, and only once the chapters start. */
+.scrim {
+  /* Solid under the whole text column (gutter + card width), then a soft
+     blend into the model, so no building ever shows through the text. */
+  --text-edge: calc(var(--gutter) + min(420px, 31vw));
+  background: linear-gradient(90deg, var(--ground) 0, var(--ground) calc(var(--text-edge) + 24px),
+    color-mix(in oklab, var(--ground) 60%, transparent) calc(var(--text-edge) + 80px),
+    transparent calc(var(--text-edge) + 150px));
+}
+
+.atmos::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.22;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.4  0 0 0 0 0.37  0 0 0 0 0.33  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+.chapters {
+  position: relative;
+  z-index: 1;
+  margin-top: -100vh;
+  margin-top: -100svh;
+  pointer-events: none;
+}
+
+.chapter {
+  position: relative;
+  min-height: 260vh;
+  padding-inline: var(--gutter);
+}
+
+.chapter[data-chapter="switch-ai"] {
+  min-height: 460vh;
+}
+
+.chapter-hero {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: flex-end;
+  padding-block: var(--top-h) 9vh;
+}
+
+.chapter-end {
+  min-height: 180vh;
+}
+
+/* Chapter text sits straight on the ground: a kicker, one big word, a few
+   plain lines. No boxes. */
+.card {
+  pointer-events: auto;
+  position: sticky;
+  top: calc(var(--top-h) + 4vh);
+  width: min(420px, 31vw);
+}
+
+.kicker {
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.card h2,
+.card-hero h1 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 0.92;
+}
+
+.card h2 {
+  margin-top: 10px;
+  font-size: clamp(56px, 6.4vw, 104px);
+}
+
+.card-hero {
+  position: static;
+  width: min(640px, 48vw);
+}
+
+.card-hero h1 {
+  margin-top: 14px;
+  font-size: clamp(64px, 8.6vw, 148px);
+}
+
+.hero-line {
+  margin-top: 24px;
+  max-width: 34ch;
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+.hero-hint {
+  margin-top: 10px;
+  max-width: 44ch;
+  color: var(--ink-2);
+}
+
+.index {
+  list-style: none;
+  padding: 0;
+  margin-top: 32px;
+  border-top: 1px solid var(--line);
+  max-width: 520px;
+}
+
+.index a {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  transition: color 160ms var(--ease-out), padding 200ms var(--ease-out);
+}
+
+.index a span:first-child {
+  font-size: 16px;
+}
+
+.index a span:last-child {
+  color: var(--ink-3);
+  font-family: var(--font-code);
+  font-size: 11px;
+  text-align: right;
+}
+
+.index a:hover,
+.index a.is-active {
+  padding-left: 8px;
+  color: var(--signal);
+}
+
+.card-summary {
+  margin-top: 22px;
+  font-size: 17px;
+  line-height: 1.5;
+  max-width: 36ch;
+}
+
+.card-points {
+  list-style: none;
+  margin-top: 22px;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  max-width: 40ch;
+}
+
+.card-points li {
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.stack {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-family: var(--font-code);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.how {
+  margin-top: 24px;
+  display: grid;
+  gap: 14px;
+  max-width: 40ch;
+}
+
+.how div {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.how dt {
+  font-weight: 500;
+}
+
+.how dd {
+  color: var(--ink-2);
+  font-size: 14px;
+}
+
+.contacts {
+  list-style: none;
+  padding: 0;
+  margin-top: 28px;
+  border-top: 1px solid var(--line);
+  max-width: 440px;
+}
+
+.contacts li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.contacts span {
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.contacts a {
+  font-size: 17px;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.contacts a:hover {
+  text-decoration: underline;
+}
+
+.links {
+  list-style: none;
+  padding: 0;
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+}
+
+.foot {
+  padding: 24px var(--gutter) 40px;
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--ink-2);
+  background: var(--ground);
+}
+
+/* Scene panels: paper spec sheets lifted off the model */
+
+.panels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.panel {
+  position: absolute;
+  right: var(--gutter);
+  top: var(--top-h);
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: min(400px, 29vw);
+  opacity: 0;
+  visibility: hidden;
+}
+
+.m-panel,
+.m-fade {
+  display: none;
+}
+
+/* The chapter skipped over by a link jump stays out of sight. */
+.is-suppressed {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* The model */
+
+.c-grid line {
+  stroke: rgb(23 22 20 / 0.07);
+  stroke-width: 1;
+}
+
+.c-road polygon {
+  fill: color-mix(in oklab, var(--ground) 88%, #000);
+  stroke: none;
+}
+
+.shadows polygon {
+  fill: rgb(48 38 24 / 0.16);
+}
+
+.c-bldg {
+  cursor: pointer;
+}
+
+.c-bldg:focus {
+  outline: none;
+}
+
+.c-floor polygon,
+.c-box polygon {
+  stroke: var(--edge);
+  stroke-width: 0.75;
+  stroke-linejoin: round;
+}
+
+.f-top {
+  fill: var(--clay-top);
+}
+
+.f-left {
+  fill: var(--clay-left);
+}
+
+.f-right {
+  fill: var(--clay-right);
+}
+
+.c-floor .c-win {
+  fill: #1d1b17;
+  fill-opacity: 0.16;
+  stroke: none;
+}
+
+.c-floor .c-win.is-lit {
+  fill: var(--glow);
+  fill-opacity: 1;
+}
+
+.c-floor .c-glass {
+  fill: #1d1b17;
+  fill-opacity: 0.12;
+}
+
+.civ-new {
+  opacity: 0;
+}
+
+.c-extra line,
+.c-extra polygon {
+  stroke: rgb(23 22 20 / 0.55);
+  stroke-width: 1;
+  fill: none;
+}
+
+.c-scaffold polygon {
+  stroke-dasharray: 3 3;
+}
+
+.c-beacon {
+  fill: var(--signal);
+}
+
+.c-bldg.is-active .f-top {
+  fill: #ffffff;
+}
+
+.c-bldg.is-active .c-win {
+  fill: var(--glow);
+  fill-opacity: 1;
+}
+
+.c-district polygon {
+  fill: rgb(255 255 255 / 0.12);
+  stroke: rgb(23 22 20 / 0.18);
+  stroke-dasharray: 5 5;
+}
+
+.loop-ring polygon {
+  fill: none;
+  stroke: rgb(23 22 20 / 0.35);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+}
+
+.c-note,
+.ground-notes text,
+.ground-label {
+  fill: var(--ink-2);
+  font-family: var(--font-code);
+  font-size: 9px;
+}
+
+.beam,
+.flow-link {
+  stroke: var(--signal);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+
+circle.packet,
+.ticket {
+  fill: var(--signal);
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+.pod-light {
+  fill: #1d1b17;
+  opacity: 0.3;
+}
+
+/* Model tags: small white labels on thin leader lines */
+
+.c-label line,
+.comp line,
+.stage-chip line,
+.mem-chip line,
+.loop-chip line {
+  stroke: rgb(23 22 20 / 0.45);
+}
+
+.c-label rect,
+.comp rect,
+.stage-chip rect {
+  fill: #ffffff;
+  stroke: none;
+}
+
+.c-label text,
+.comp text,
+.stage-chip text {
+  fill: var(--ink);
+  font-family: var(--font-code);
+  font-size: 11px;
+}
+
+.stage-chip text {
+  font-size: 9px;
+}
+
+.c-label .c-sub {
+  fill: var(--ink-3);
+}
+
+.c-label.is-active rect {
+  fill: var(--signal);
+}
+
+.c-label.is-active text {
+  fill: var(--signal-ink);
+}
+
+.mem-chip rect,
+.loop-chip rect {
+  fill: var(--signal);
+  stroke: none;
+}
+
+.mem-chip text,
+.loop-chip text {
+  fill: var(--signal-ink);
+  font-family: var(--font-code);
+  font-size: 11px;
+}
+
+/* Spec sheets */
+
+.scene {
+  background: var(--paper);
+  border-radius: 3px;
+  box-shadow: var(--sheet-shadow);
+  font-size: 13px;
+  overflow: hidden;
+}
+
+.sc-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-code);
+  font-size: 11px;
+}
+
+.sc-dim {
+  color: var(--ink-3);
+}
+
+.sc-foot {
+  padding: 10px 16px 14px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.bubble {
+  margin: 12px 16px 0;
+  padding: 9px 12px;
+  border-radius: 3px;
+  line-height: 1.4;
+}
+
+.bubble-q {
+  margin-left: auto;
+  width: fit-content;
+  max-width: 85%;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.bubble-a {
+  border: 1px solid var(--line);
+  margin-bottom: 14px;
+}
+
+/* Release states, pipeline steps and pillar tabs share one chip */
+
+.states,
+.pipe,
+.ptabs {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-code);
+  font-size: 10px;
+}
+
+.state,
+.pipe-step,
+.ptab {
+  padding: 3px 7px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background-color: rgba(0, 0, 0, 0);
+  color: var(--ink-2);
+}
+
+.flow-steps {
+  list-style: none;
+  padding: 12px 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.fs {
+  display: grid;
+  grid-template-columns: 20px 74px 1fr;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.fs-n {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font-family: var(--font-code);
+  font-size: 10px;
+  background-color: rgba(0, 0, 0, 0);
+}
+
+.fs-name {
+  font-family: var(--font-code);
+  font-size: 12px;
+}
+
+.fs-detail {
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+
+/* Switch AI: four pillars, one page each */
+
+.pages {
+  display: grid;
+}
+
+.pillar {
+  grid-area: 1 / 1;
+  padding: 14px 16px 16px;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.pl-lede {
+  font-family: var(--font-serif);
+  font-size: 21px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.pl-rows {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.pl-row {
+  display: grid;
+  grid-template-columns: 82px 1fr;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.pl-k {
+  font-family: var(--font-code);
+  font-size: 12px;
+}
+
+.pl-v,
+.pl-note {
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+
+.pl-note {
+  font-size: 11.5px;
+}
+
+.bars {
+  display: grid;
+  gap: 6px;
+  font-family: var(--font-code);
+  font-size: 10.5px;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 62px 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.bar-track {
+  position: relative;
+  height: 6px;
+  background: var(--line);
+}
+
+.bar-fill,
+.bar-old {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  transform-origin: left;
+}
+
+.bar-fill {
+  background: var(--signal);
+  z-index: 1;
+}
+
+.bar-old {
+  background: var(--ink-3);
+  opacity: 0.4;
+}
+
+.bar-val i {
+  font-style: normal;
+  color: var(--ink-3);
+}
+
+.budget {
+  position: relative;
+  display: grid;
+  grid-template-columns: 85fr 15fr;
+  font-family: var(--font-code);
+  font-size: 10.5px;
+}
+
+.budget span:not(.budget-head) {
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.budget-wrap {
+  border-left: 0 !important;
+  color: var(--ink-3);
+}
+
+.budget-head {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: 85%;
+  width: 2px;
+  background: var(--signal);
+}
+
+/* Light: pick a component, ask, review */
+
+.scene-light {
+  position: relative;
+  padding-bottom: 16px;
+}
+
+.pv-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-code);
+  font-size: 11px;
+}
+
+.pv-body {
+  position: relative;
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  min-height: 200px;
+  background: #f3f1ec;
+}
+
+.pv-nav {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 14px 12px;
+  border-right: 1px solid var(--line);
+}
+
+.pv-nav i {
+  height: 5px;
+  background: var(--line);
+}
+
+.pv-main {
+  padding: 12px 14px;
+}
+
+.pv-title {
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.pv-filter {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.pv-filter span {
+  padding: 1px 8px;
+  border: 1px solid var(--line);
+  font-size: 11px;
+}
+
+.pv-filter .is-on {
+  border-color: var(--ink);
+}
+
+.pv-table {
+  position: relative;
+}
+
+.pv-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-code);
+  font-size: 11px;
+}
+
+.pv-st {
+  color: var(--ink-3);
+}
+
+.pv-failed {
+  color: var(--ink);
+}
+
+.pick-box {
+  position: absolute;
+  inset: -4px;
+  border: 1.5px solid var(--signal);
+}
+
+.pick-tag {
+  position: absolute;
+  left: -1.5px;
+  top: -21px;
+  padding: 2px 6px;
+  background: var(--signal);
+  color: var(--signal-ink);
+  font-family: var(--font-code);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.cursor {
+  position: absolute;
+  left: 58%;
+  top: 62%;
+  width: 16px;
+  height: 20px;
+}
+
+.cursor path {
+  fill: var(--ink);
+  stroke: #fff;
+  stroke-width: 1;
+}
+
+div.packet {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  margin: 12px 16px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  font-family: var(--font-code);
+  font-size: 11px;
+}
+
+div.packet span:not(.packet-branch):not(.packet-pr) {
+  color: var(--ink-3);
+  grid-column: 1;
+}
+
+.packet-pr {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: center;
+  padding: 6px 10px;
+  border: 1px solid var(--ink);
+}
+
+/* agent-org */
+
+.thread {
+  list-style: none;
+  padding: 12px 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.msg {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 0 10px;
+}
+
+.msg-av {
+  grid-row: 1 / span 2;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  background: #efebe4;
+  font-family: var(--font-code);
+  font-size: 10px;
+}
+
+.msg-who {
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.msg-text {
+  color: var(--ink-2);
+  line-height: 1.4;
+}
+
+/* Civitas */
+
+.scene-civitas img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* The screenshot is a button: it opens full size. */
+.shot-open {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  pointer-events: auto;
+}
+
+.shot-hint {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding: 4px 8px;
+  background: rgb(23 22 20 / 0.78);
+  color: #fff;
+  font-family: var(--font-code);
+  font-size: 10px;
+  opacity: 0.85;
+  transition: opacity 160ms var(--ease-out);
+}
+
+.shot-open:hover .shot-hint,
+.shot-open:focus-visible .shot-hint {
+  opacity: 1;
+}
+
+.zoom {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 56px 12px 12px;
+  background: rgb(23 22 20 / 0.92);
+  cursor: zoom-out;
+  animation: zoom-in 220ms var(--ease-out);
+}
+
+.zoom-frame {
+  display: grid;
+  place-items: center;
+}
+
+.zoom-hint {
+  display: none;
+}
+
+/* Large, but always whole inside the window, keeping its shape. */
+.zoom img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 92vw;
+  max-height: calc(100svh - 120px);
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.5);
+}
+
+.zoom-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  padding: 8px 14px;
+  border: 1px solid rgb(255 255 255 / 0.4);
+  background: none;
+  color: #fff;
+  font-family: var(--font-code);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* Portrait phones: the picture fills most of the height; swipe to pan. */
+@media (max-aspect-ratio: 1/1) {
+  .zoom-frame {
+    height: auto;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .zoom img {
+    width: auto;
+    height: min(60svh, 810px);
+    max-width: none;
+    max-height: none;
+  }
+
+  .zoom-hint {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 14px;
+    text-align: center;
+    color: rgb(255 255 255 / 0.7);
+    font-family: var(--font-code);
+    font-size: 11px;
+  }
+}
+
+@keyframes zoom-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zoom {
+    animation: none;
+  }
+}
+
+.civ-log {
+  list-style: none;
+  padding: 12px 16px;
+  display: grid;
+  gap: 4px;
+  font-family: var(--font-code);
+  font-size: 11px;
+}
+
+.civ-log span {
+  display: inline-block;
+  width: 7ch;
+  color: var(--ink-3);
+}
+
+.civ-log .is-refused {
+  color: var(--signal);
+}
+
+/* Narrow screens: the stage pins to the top half, chapters scroll below it
+   and carry their own copy of the scene. */
+
+@media (max-width: 899px) {
+  /* Phones: text on top, the city pinned in the bottom part of the screen. */
+  body {
+    padding-top: var(--top-h);
+    padding-bottom: 36svh;
+  }
+
+  .top {
+    background: var(--ground);
+    pointer-events: auto;
+  }
+
+  .top nav {
+    display: none;
+  }
+
+  .stage {
+    position: fixed;
+    inset: auto 0 0;
+    height: 36svh;
+    z-index: 2;
+  }
+
+  /* Text dissolves into the city instead of being cut by its edge: a band
+     of ground colour above the city, and the city's own top fading up. */
+  .m-fade {
+    display: block;
+    position: fixed;
+    inset: auto 0 36svh;
+    height: 72px;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(180deg, transparent, var(--ground));
+  }
+
+  .stage::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 48px;
+    pointer-events: none;
+    background: linear-gradient(180deg, var(--ground), transparent);
+  }
+
+  .scrim {
+    display: none;
+  }
+
+  .panels {
+    display: none;
+  }
+
+  .chapters {
+    margin-top: 0;
+    pointer-events: auto;
+  }
+
+  .chapter,
+  .chapter-end,
+  .chapter[data-chapter="switch-ai"] {
+    min-height: 0;
+    padding-block: 32px 56px;
+  }
+
+  .chapter-hero {
+    display: block;
+    min-height: 0;
+    padding-top: 32px;
+  }
+
+  .card,
+  .card-hero {
+    position: static;
+    width: auto;
+  }
+
+  .card h2 {
+    font-size: 64px;
+  }
+
+  .card-hero h1 {
+    font-size: 68px;
+  }
+
+  .m-panel {
+    display: block;
+    margin-top: 28px;
+  }
+
+  .m-panel .scene {
+    transform-origin: 50% 0;
+  }
+
+  /* The screenshot already spans the screen on phones: no full-size view. */
+  .shot-open {
+    pointer-events: none;
+    cursor: default;
+  }
+
+  .shot-hint {
+    display: none;
+  }
+
+  .contacts li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .contacts a {
+    text-align: left;
+    font-size: 16px;
+  }
+}
