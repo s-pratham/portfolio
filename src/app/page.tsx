@@ -20,9 +20,6 @@ export default function Home() {
       <main>
         <Story />
       </main>
-      <footer className="foot">
-        <p>Prathamesh Sonawane, 2026</p>
-      </footer>
     </>
   );
 }
